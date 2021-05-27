@@ -3,9 +3,14 @@ import { existsSync, writeFile } from 'fs';
 import { Octokit } from 'octokit';
 import { promisify } from 'util';
 import { ArtifactCacheManager } from './artifactCacheManager';
-import { HOUR_SECONDS, REPO_NAME, REPO_OWNER } from '../constants';
+import { HOUR_SECONDS } from '../constants';
 import { arrayBufferToBuffer } from '../functions';
 import { ArtifactCacheExpiryManager } from './artifactCacheExpiryManager';
+
+export interface ArtifactRepo {
+	owner: string;
+	name: string;
+}
 
 export class ArtifactManager {
 	octokit: Octokit;
@@ -22,10 +27,10 @@ export class ArtifactManager {
 		this.artifactCacheExpiryManager = artifactCacheExpiryManager;
 	}
 
-	async getArtifactById(id: number) {
+	async getArtifactById(repo: ArtifactRepo, id: number) {
 		const artifact = await this.octokit.rest.actions.getArtifact({
-			owner: REPO_OWNER,
-			repo: REPO_NAME,
+			owner: repo.owner,
+			repo: repo.name,
 			artifact_id: id,
 		});
 		if (artifact.status != 200)
@@ -33,10 +38,10 @@ export class ArtifactManager {
 		return artifact.data;
 	}
 
-	async getLatestArtifact() {
+	async getLatestArtifact(repo: ArtifactRepo) {
 		const artifacts = await this.octokit.rest.actions.listArtifactsForRepo({
-			owner: REPO_OWNER,
-			repo: REPO_NAME,
+			owner: repo.owner,
+			repo: repo.name,
 		});
 		if (artifacts.status != 200)
 			throw new Error(`GitHub returned status code ${artifacts.status}`);
@@ -48,7 +53,8 @@ export class ArtifactManager {
 	}
 
 	async fetchArtifactFile(
-		artifact: Endpoints['GET /repos/{owner}/{repo}/actions/artifacts/{artifact_id}']['response']['data']
+		artifact: Endpoints['GET /repos/{owner}/{repo}/actions/artifacts/{artifact_id}']['response']['data'],
+		repo: ArtifactRepo
 	) {
 		const cachedFile =
 			await this.artifactCacheManager.getCachedArtifactFileById(artifact.id);
@@ -58,8 +64,8 @@ export class ArtifactManager {
 			else return cachedFile.filePath;
 		}
 		const res = await this.octokit.rest.actions.downloadArtifact({
-			owner: REPO_OWNER,
-			repo: REPO_NAME,
+			owner: repo.owner,
+			repo: repo.name,
 			artifact_id: artifact.id,
 			archive_format: 'zip',
 		});
@@ -72,6 +78,7 @@ export class ArtifactManager {
 		await this.artifactCacheManager.addArtifactFileToCache({
 			artifactId: artifact.id,
 			filePath: path,
+			repo: repo,
 			expireAt: Math.round(new Date().getTime() / 1000 + HOUR_SECONDS * 6),
 		});
 		await this.artifactCacheExpiryManager.refresh();

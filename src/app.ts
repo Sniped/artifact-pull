@@ -30,19 +30,38 @@ const artifactManager = new ArtifactManager(
 
 artifactManager.artifactCacheExpiryManager.init();
 
-app.get('/artifacts/:id', async (req, res) => {
-	if (!req.params.id || parseInt(req.params.id) == NaN)
+app.get('/artifacts/:repoOwner/:repoName/:id', async (req, res) => {
+	if (
+		!req.params.id ||
+		parseInt(req.params.id) == NaN ||
+		!req.params.repoOwner ||
+		!req.params.repoName
+	)
 		return res.sendStatus(400);
 	const artifact = await artifactManager.getArtifactById(
+		{
+			owner: req.params.repoOwner,
+			name: req.params.repoName,
+		},
 		parseInt(req.params.id)
 	);
-	const path = await artifactManager.fetchArtifactFile(artifact);
+	const path = await artifactManager.fetchArtifactFile(artifact, {
+		owner: req.params.repoOwner,
+		name: req.params.repoName,
+	});
 	res.download(path);
 });
 
-app.get('/artifacts', async (_, res) => {
-	const artifact = await artifactManager.getLatestArtifact();
-	const path = await artifactManager.fetchArtifactFile(artifact);
+app.get('/artifacts/:repoOwner/:repoName', async (req, res) => {
+	if (!req.params.repoOwner || !req.params.repoName) return res.status(400);
+	const artifact = await artifactManager.getLatestArtifact({
+		owner: req.params.repoOwner,
+		name: req.params.repoName,
+	});
+	const path = await artifactManager.fetchArtifactFile(artifact, {
+		owner: req.params.repoOwner,
+		name: req.params.repoName,
+	});
 	res.download(path);
 });
 

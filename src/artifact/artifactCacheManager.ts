@@ -1,10 +1,12 @@
 import { existsSync, unlink } from 'fs';
 import { RedisClient } from 'redis';
 import { promisify } from 'util';
+import { ArtifactRepo } from './artifactManager';
 
 export interface CachedArtifactFile {
 	artifactId: number;
 	filePath: string;
+	repo: ArtifactRepo;
 	expireAt: number;
 }
 
