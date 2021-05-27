@@ -1,7 +1,7 @@
 import express from 'express';
 import { Octokit } from 'octokit';
-import { ArtifactCacheManager } from './artifactCacheManager';
-import { ArtifactManager } from './artifactManager';
+import { ArtifactCacheManager } from './artifact/artifactCacheManager';
+import { ArtifactManager } from './artifact/artifactManager';
 
 const dotenv = require('dotenv');
 dotenv.config();

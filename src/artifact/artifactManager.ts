@@ -3,8 +3,8 @@ import { writeFile } from 'fs';
 import { Octokit } from 'octokit';
 import { promisify } from 'util';
 import { ArtifactCacheManager } from './artifactCacheManager';
-import { REPO_NAME, REPO_OWNER } from './constants';
-import { arrayBufferToBuffer } from './functions';
+import { REPO_NAME, REPO_OWNER } from '../constants';
+import { arrayBufferToBuffer } from '../functions';
 
 export class ArtifactManager {
 	octokit: Octokit;
