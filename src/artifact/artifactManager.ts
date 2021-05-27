@@ -72,7 +72,7 @@ export class ArtifactManager {
 		await this.artifactCacheManager.addArtifactFileToCache({
 			artifactId: artifact.id,
 			filePath: path,
-			expireAt: Math.round((new Date().getTime() / 1000) + (HOUR_SECONDS * 6)),
+			expireAt: Math.round(new Date().getTime() / 1000 + HOUR_SECONDS * 6),
 		});
 		await this.artifactCacheExpiryManager.refresh();
 		return path;
