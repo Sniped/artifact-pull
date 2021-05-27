@@ -38,6 +38,8 @@ app.get('/artifacts/:repoOwner/:repoName/:id', async (req, res) => {
 		!req.params.repoName
 	)
 		return res.sendStatus(400);
+	if (req.headers.authorization !== process.env.AUTH_TOKEN)
+		return res.sendStatus(401);
 	const artifact = await artifactManager.getArtifactById(
 		{
 			owner: req.params.repoOwner,
@@ -54,6 +56,8 @@ app.get('/artifacts/:repoOwner/:repoName/:id', async (req, res) => {
 
 app.get('/artifacts/:repoOwner/:repoName', async (req, res) => {
 	if (!req.params.repoOwner || !req.params.repoName) return res.status(400);
+	if (req.headers.authorization !== process.env.AUTH_TOKEN)
+		return res.sendStatus(401);
 	const artifact = await artifactManager.getLatestArtifact({
 		owner: req.params.repoOwner,
 		name: req.params.repoName,
