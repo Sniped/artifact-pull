@@ -42,10 +42,7 @@ export class ArtifactCacheExpiryManager {
 			);
 			if (!cachedArtifact) return;
 			const expiryDate = new Date(cachedArtifact.expireAt * 1000);
-			console.log(expiryDate.getTime());
-			console.log(new Date().getTime());
 			const timeDiff = expiryDate.getTime() - new Date().getTime();
-			console.log(timeDiff);
 			if (timeDiff < 0) return this.expire(cachedArtifact);
 			const timeout = setTimeout(() => this.expire(cachedArtifact), timeDiff);
 			this.expiry.set(timeout, cachedArtifact);
