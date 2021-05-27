@@ -1,18 +1,25 @@
 import { Endpoints } from '@octokit/types';
-import { writeFile } from 'fs';
+import { existsSync, writeFile } from 'fs';
 import { Octokit } from 'octokit';
 import { promisify } from 'util';
 import { ArtifactCacheManager } from './artifactCacheManager';
-import { REPO_NAME, REPO_OWNER } from '../constants';
+import { HOUR_SECONDS, REPO_NAME, REPO_OWNER } from '../constants';
 import { arrayBufferToBuffer } from '../functions';
+import { ArtifactCacheExpiryManager } from './artifactCacheExpiryManager';
 
 export class ArtifactManager {
 	octokit: Octokit;
 	artifactCacheManager: ArtifactCacheManager;
+	artifactCacheExpiryManager: ArtifactCacheExpiryManager;
 
-	constructor(octokit: Octokit, artifactCacheManager: ArtifactCacheManager) {
+	constructor(
+		octokit: Octokit,
+		artifactCacheManager: ArtifactCacheManager,
+		artifactCacheExpiryManager: ArtifactCacheExpiryManager
+	) {
 		this.octokit = octokit;
 		this.artifactCacheManager = artifactCacheManager;
+		this.artifactCacheExpiryManager = artifactCacheExpiryManager;
 	}
 
 	async getArtifactById(id: number) {
@@ -45,7 +52,11 @@ export class ArtifactManager {
 	) {
 		const cachedFile =
 			await this.artifactCacheManager.getCachedArtifactFileById(artifact.id);
-		if (cachedFile) return cachedFile.filePath;
+		if (cachedFile) {
+			if (!existsSync(cachedFile.filePath))
+				this.artifactCacheManager.deleteCachedArtifactWithId(artifact.id);
+			else return cachedFile.filePath;
+		}
 		const res = await this.octokit.rest.actions.downloadArtifact({
 			owner: REPO_OWNER,
 			repo: REPO_NAME,
@@ -53,13 +64,17 @@ export class ArtifactManager {
 			archive_format: 'zip',
 		});
 		const path = `${process.cwd()}/artifactsCache/artifact-${artifact.id}.zip`;
-		const asyncWriteFile = promisify(writeFile);
-		const arrayBuffer = res.data as ArrayBuffer;
-		await asyncWriteFile(path, arrayBufferToBuffer(arrayBuffer));
+		if (!existsSync(path)) {
+			const asyncWriteFile = promisify(writeFile);
+			const arrayBuffer = res.data as ArrayBuffer;
+			await asyncWriteFile(path, arrayBufferToBuffer(arrayBuffer));
+		}
 		await this.artifactCacheManager.addArtifactFileToCache({
 			artifactId: artifact.id,
 			filePath: path,
+			expireAt: Math.round((new Date().getTime() / 1000) + (HOUR_SECONDS * 6)),
 		});
+		await this.artifactCacheExpiryManager.refresh();
 		return path;
 	}
 }

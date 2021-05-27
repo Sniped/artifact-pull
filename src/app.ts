@@ -1,6 +1,7 @@
 import express from 'express';
 import { Octokit } from 'octokit';
 import { createClient } from 'redis';
+import { ArtifactCacheExpiryManager } from './artifact/artifactCacheExpiryManager';
 import { ArtifactCacheManager } from './artifact/artifactCacheManager';
 import { ArtifactManager } from './artifact/artifactManager';
 
@@ -15,10 +16,19 @@ const octokit = new Octokit({
 
 const redisClient = createClient();
 
+const artifactCacheManager = new ArtifactCacheManager(redisClient);
+
+const artifactCacheExpiryManager = new ArtifactCacheExpiryManager(
+	artifactCacheManager
+);
+
 const artifactManager = new ArtifactManager(
 	octokit,
-	new ArtifactCacheManager(redisClient)
+	artifactCacheManager,
+	artifactCacheExpiryManager
 );
+
+artifactManager.artifactCacheExpiryManager.init();
 
 app.get('/artifacts/:id', async (req, res) => {
 	if (!req.params.id || parseInt(req.params.id) == NaN)
