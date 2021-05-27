@@ -1,20 +1,29 @@
+import { RedisClient } from 'redis';
+import { promisify } from 'util';
+
 interface CachedArtifactFile {
 	artifactId: number;
 	filePath: string;
 }
 
 export class ArtifactCacheManager {
-	private cache: Map<number, CachedArtifactFile>;
+	private redisClient: RedisClient;
 
-	constructor() {
-		this.cache = new Map();
+	constructor(redisClient: RedisClient) {
+		this.redisClient = redisClient;
 	}
 
-	getCachedArtifactFileById(id: number) {
-		return this.cache.get(id);
+	async getCachedArtifactFileById(id: number) {
+		const getAsync = promisify(this.redisClient.get).bind(this.redisClient);
+		const file = await getAsync(`artifacts@${id.toString()}`);
+		return file ? (JSON.parse(file) as CachedArtifactFile) : null;
 	}
 
-	addArtifactFileToCache(artifactId: number, filePath: string) {
-		this.cache.set(artifactId, { artifactId, filePath });
+	async addArtifactFileToCache(artifactFile: CachedArtifactFile) {
+		const setAsync = promisify(this.redisClient.set).bind(this.redisClient);
+		await setAsync(
+			`artifacts@${artifactFile.artifactId.toString()}`,
+			JSON.stringify(artifactFile)
+		);
 	}
 }

@@ -43,9 +43,8 @@ export class ArtifactManager {
 	async fetchArtifactFile(
 		artifact: Endpoints['GET /repos/{owner}/{repo}/actions/artifacts/{artifact_id}']['response']['data']
 	) {
-		const cachedFile = this.artifactCacheManager.getCachedArtifactFileById(
-			artifact.id
-		);
+		const cachedFile =
+			await this.artifactCacheManager.getCachedArtifactFileById(artifact.id);
 		if (cachedFile) return cachedFile.filePath;
 		const res = await this.octokit.rest.actions.downloadArtifact({
 			owner: REPO_OWNER,
@@ -57,7 +56,10 @@ export class ArtifactManager {
 		const asyncWriteFile = promisify(writeFile);
 		const arrayBuffer = res.data as ArrayBuffer;
 		await asyncWriteFile(path, arrayBufferToBuffer(arrayBuffer));
-		this.artifactCacheManager.addArtifactFileToCache(artifact.id, path);
+		await this.artifactCacheManager.addArtifactFileToCache({
+			artifactId: artifact.id,
+			filePath: path,
+		});
 		return path;
 	}
 }
