@@ -1,0 +1,21 @@
+{
+  "name": "artifact-pull",
+  "version": "1.0.0",
+  "description": "Pulls artifacts from a GitHub action",
+  "main": "src/app.ts",
+  "author": "Facto",
+  "scripts": {
+    "start": "ts-node ."
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@octokit/types": "^6.16.0",
+    "@types/express": "^4.17.12",
+    "@types/node": "^15.6.1",
+    "@types/node-fetch": "^2.5.10",
+    "dotenv": "^10.0.0",
+    "express": "^4.17.1",
+    "node-fetch": "^2.6.1",
+    "octokit": "^1.0.5"
+  }
+}
