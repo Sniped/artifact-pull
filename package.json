@@ -10,14 +10,11 @@
   "license": "MIT",
   "dependencies": {
     "@octokit/types": "^6.16.0",
-    "@types/async-redis": "^1.1.2",
     "@types/express": "^4.17.12",
     "@types/node": "^15.6.1",
-    "@types/node-fetch": "^2.5.10",
     "@types/redis": "^2.8.28",
     "dotenv": "^10.0.0",
     "express": "^4.17.1",
-    "node-fetch": "^2.6.1",
     "octokit": "^1.0.5",
     "redis": "^3.1.2"
   }
